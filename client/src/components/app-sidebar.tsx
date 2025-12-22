@@ -1,4 +1,5 @@
 import { useLocation, Link } from "wouter";
+import { useAuth } from "@/lib/auth";
 import {
   LayoutDashboard,
   CreditCard,
@@ -11,6 +12,7 @@ import {
   Tags,
   FolderTree,
   RefreshCw,
+  UserCog,
 } from "lucide-react";
 import {
   Sidebar,
@@ -82,8 +84,18 @@ const settingsNavItems = [
   },
 ];
 
+const adminNavItems = [
+  {
+    title: "Usuários",
+    url: "/usuarios",
+    icon: UserCog,
+    adminOnly: true,
+  },
+];
+
 export function AppSidebar() {
   const [location] = useLocation();
+  const { user } = useAuth();
 
   return (
     <Sidebar>
@@ -139,6 +151,28 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        {user?.role === "admin" && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Administração</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminNavItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location === item.url}
+                    >
+                      <Link href={item.url} data-testid={`link-nav-${item.title.toLowerCase().replace(/\s/g, "-")}`}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter className="p-4">
         <Button variant="outline" className="w-full gap-2" data-testid="button-sync-mercadopago">

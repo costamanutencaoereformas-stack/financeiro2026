@@ -7,15 +7,21 @@ export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  name: text("name").notNull(),
+  role: text("role").notNull().default("viewer"), // 'admin' | 'financial' | 'viewer'
+  active: boolean("active").notNull().default(true),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
+  name: true,
+  role: true,
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type UserRole = "admin" | "financial" | "viewer";
 
 // Suppliers (Fornecedores)
 export const suppliers = pgTable("suppliers", {
