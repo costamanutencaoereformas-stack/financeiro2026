@@ -11,6 +11,11 @@ export async function registerRoutes(
 ): Promise<Server> {
   setupAuth(app);
 
+  // Health check endpoint for Render
+  app.get("/health", (req, res) => {
+    res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
   app.post("/api/auth/logout", (req, res) => {
     req.logout(() => {
       res.json({ success: true });
