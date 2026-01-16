@@ -61,8 +61,7 @@ export function setupAuth(app: Express): void {
         secure: process.env.NODE_ENV === "production",
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000,
-        sameSite: 'lax',
-        domain: process.env.NODE_ENV === "production" ? '.onrender.com' : undefined
+        sameSite: 'lax'
       },
     })
   );
@@ -78,12 +77,12 @@ export function setupAuth(app: Express): void {
         if (!user || !user.password) {
           return done(null, false);
         }
-        
+
         const isValid = await comparePasswords(password, user.password);
         if (!isValid) {
           return done(null, false);
         }
-        
+
         return done(null, {
           id: user.id,
           fullName: user.fullName,
