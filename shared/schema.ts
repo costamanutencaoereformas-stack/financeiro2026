@@ -4,20 +4,30 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const users = pgTable("users", {
-  id: uuid("id").primaryKey().notNull(),
+  id: uuid("id").primaryKey().defaultRandom().notNull(),
+  username: text("username").notNull(),
+  email: text("email"),
+  password: text("password"),
+  name: text("name"),
   fullName: text("full_name"),
   role: text("role"),
   team: text("team"),
   status: text("status"),
+  active: boolean("active").default(true),
   createdAt: timestamp("created_at", { withTimezone: true }),
   updatedAt: timestamp("updated_at", { withTimezone: true }),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
+  username: true,
+  email: true,
+  password: true,
+  name: true,
   fullName: true,
   role: true,
   team: true,
   status: true,
+  active: true,
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -344,5 +354,13 @@ export type FinancialGoal = typeof financialGoals.$inferSelect;
 export interface FinancialGoalProgress extends FinancialGoal {
   currentAmount: number;
   percentage: number;
+}
+
+export interface CashFlowSummary {
+  initialBalance: number;
+  totalIncome: number;
+  totalExpense: number;
+  finalBalance: number;
+  projectedBalance: number;
 }
 

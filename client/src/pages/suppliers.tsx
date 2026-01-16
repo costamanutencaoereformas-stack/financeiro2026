@@ -195,13 +195,13 @@ export default function Suppliers() {
       if (!response.ok) return;
 
       const data = await response.json();
-      
+
       if (data.estabelecimento) {
         form.setValue('name', data.estabelecimento.nome_fantasia || data.estabelecimento.nome_empresarial || '');
         form.setValue('email', data.estabelecimento.email || '');
         form.setValue('phone', data.estabelecimento.ddd1 + data.estabelecimento.telefone1 || '');
         form.setValue('address', `${data.estabelecimento.tipo_logradouro || ''} ${data.estabelecimento.logradouro || ''}, ${data.estabelecimento.numero || ''}, ${data.estabelecimento.bairro || ''}, ${data.estabelecimento.municipio || ''} - ${data.estabelecimento.uf || ''}`.trim());
-        
+
         toast({
           title: "Dados encontrados",
           description: "Informações do CNPJ foram preenchidas automaticamente.",
@@ -233,7 +233,7 @@ export default function Suppliers() {
       filtered.sort((a, b) => {
         const aValue = a[sortConfig.key] || "";
         const bValue = b[sortConfig.key] || "";
-        
+
         if (aValue < bValue) {
           return sortConfig.direction === 'asc' ? -1 : 1;
         }
@@ -249,10 +249,10 @@ export default function Suppliers() {
 
   const stats = useMemo(() => {
     if (!suppliers) return { total: 0, active: 0, recent: 0 };
-    
+
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
+
     return {
       total: suppliers.length,
       active: suppliers.filter(s => s.status !== 'inactive').length,
@@ -310,74 +310,28 @@ export default function Suppliers() {
                 Novo Fornecedor
               </Button>
             </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {editingSupplier ? "Editar Fornecedor" : "Novo Fornecedor"}
-              </DialogTitle>
-              <DialogDescription>
-                Preencha os dados do fornecedor
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome *</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Nome do fornecedor"
-                          {...field}
-                          data-testid="input-name"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="document"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CNPJ/CPF</FormLabel>
-                      <FormControl>
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="00.000.000/0000-00"
-                            {...field}
-                            data-testid="input-document"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => searchCNPJ(field.value)}
-                            disabled={!field.value || field.value.replace(/[^\d]/g, '').length !== 14}
-                          >
-                            <SearchIcon className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid grid-cols-2 gap-4">
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {editingSupplier ? "Editar Fornecedor" : "Novo Fornecedor"}
+                </DialogTitle>
+                <DialogDescription>
+                  Preencha os dados do fornecedor
+                </DialogDescription>
+              </DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                   <FormField
                     control={form.control}
-                    name="email"
+                    name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>E-mail</FormLabel>
+                        <FormLabel>Nome *</FormLabel>
                         <FormControl>
                           <Input
-                            type="email"
-                            placeholder="email@exemplo.com"
+                            placeholder="Nome do fornecedor"
                             {...field}
-                            data-testid="input-email"
+                            data-testid="input-name"
                           />
                         </FormControl>
                         <FormMessage />
@@ -386,83 +340,129 @@ export default function Suppliers() {
                   />
                   <FormField
                     control={form.control}
-                    name="phone"
+                    name="document"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Telefone</FormLabel>
+                        <FormLabel>CNPJ/CPF</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="(00) 00000-0000"
-                            {...field}
-                            data-testid="input-phone"
-                          />
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="00.000.000/0000-00"
+                              {...field}
+                              data-testid="input-document"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => searchCNPJ(field.value)}
+                              disabled={!field.value || field.value.replace(/[^\d]/g, '').length !== 14}
+                            >
+                              <SearchIcon className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="contact"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Contato</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Nome do contato"
-                            {...field}
-                            data-testid="input-contact"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="address"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Endereço</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Endereço completo"
-                            {...field}
-                            data-testid="input-address"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => handleOpenChange(false)}
-                    data-testid="button-cancel"
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={createMutation.isPending || updateMutation.isPending}
-                    data-testid="button-submit"
-                  >
-                    {createMutation.isPending || updateMutation.isPending
-                      ? "Salvando..."
-                      : editingSupplier
-                      ? "Atualizar"
-                      : "Cadastrar"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>E-mail</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              placeholder="email@exemplo.com"
+                              {...field}
+                              data-testid="input-email"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Telefone</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="(00) 00000-0000"
+                              {...field}
+                              data-testid="input-phone"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="contact"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Contato</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Nome do contato"
+                              {...field}
+                              data-testid="input-contact"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="address"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Endereço</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Endereço completo"
+                              {...field}
+                              data-testid="input-address"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => handleOpenChange(false)}
+                      data-testid="button-cancel"
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={createMutation.isPending || updateMutation.isPending}
+                      data-testid="button-submit"
+                    >
+                      {createMutation.isPending || updateMutation.isPending
+                        ? "Salvando..."
+                        : editingSupplier
+                          ? "Atualizar"
+                          : "Cadastrar"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -481,7 +481,7 @@ export default function Suppliers() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -495,7 +495,7 @@ export default function Suppliers() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -550,7 +550,7 @@ export default function Suppliers() {
                               {supplier.document}
                             </p>
                           )}
-                          <Badge 
+                          <Badge
                             variant={supplier.status === 'inactive' ? 'destructive' : 'default'}
                             className="text-xs"
                           >
@@ -687,18 +687,18 @@ export default function Suppliers() {
                 </TableHeader>
                 <TableBody>
                   {filteredSuppliers.map((supplier, index) => (
-                    <TableRow 
-                      key={supplier.id} 
+                    <TableRow
+                      key={supplier.id}
                       className="hover:bg-slate-50 transition-colors duration-200 border-b border-slate-100"
                     >
                       <TableCell className="font-medium text-slate-900">{supplier.name}</TableCell>
                       <TableCell className="font-mono text-sm">{supplier.document || '-'}</TableCell>
                       <TableCell>
-                        <Badge 
-                          variant={supplier.status === 'inactive' ? 'destructive' : 'default'}
+                        <Badge
+                          variant={!supplier.active ? 'destructive' : 'default'}
                           className="text-xs"
                         >
-                          {supplier.status === 'inactive' ? 'Inativo' : 'Ativo'}
+                          {!supplier.active ? 'Inativo' : 'Ativo'}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -771,7 +771,7 @@ export default function Suppliers() {
             <p className="text-muted-foreground text-center mb-6 max-w-sm">
               Comece adicionando seu primeiro fornecedor para gerenciar melhor seus parceiros comerciais
             </p>
-            <Button 
+            <Button
               onClick={() => setIsOpen(true)}
               className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-300"
             >

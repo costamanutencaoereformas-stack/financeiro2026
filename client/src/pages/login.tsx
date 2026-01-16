@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { DollarSign, Loader2, ArrowRight, ShieldCheck, PieChart, TrendingUp } from "lucide-react";
+import { DollarSign, Loader2, ArrowRight, ShieldCheck, PieChart, TrendingUp, Mail } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Login() {
@@ -17,8 +17,9 @@ export default function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
+    email: "",
     password: "",
-    name: "",
+    fullName: "",
   });
 
   async function handleSubmit(e: React.FormEvent) {
@@ -27,7 +28,7 @@ export default function Login() {
 
     try {
       if (isRegistering) {
-        await register(formData.username, formData.password, formData.name);
+        await register(formData.username, formData.email, formData.password, formData.fullName);
         toast({ title: "Conta criada com sucesso!" });
       } else {
         await login(formData.username, formData.password);
@@ -151,14 +152,30 @@ export default function Login() {
                 >
                   {isRegistering && (
                     <div className="space-y-2">
-                      <Label htmlFor="name" className="text-sm font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+                      <Label htmlFor="fullName" className="text-sm font-semibold uppercase tracking-wider text-muted-foreground ml-1">
                         Nome Completo
                       </Label>
                       <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        id="fullName"
+                        value={formData.fullName}
+                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                         placeholder="Ex: João Silva"
+                        className="h-12 bg-white/50 dark:bg-zinc-950/50"
+                        required
+                      />
+                    </div>
+                  )}
+                  {isRegistering && (
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="text-sm font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+                        Email
+                      </Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="seu.email@exemplo.com"
                         className="h-12 bg-white/50 dark:bg-zinc-950/50"
                         required
                       />

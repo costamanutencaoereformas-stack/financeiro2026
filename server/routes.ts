@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import passport from "passport";
 import { storage } from "./storage";
 import { setupAuth, requireAuth, requireAdmin, requireFinancial, requireViewer } from "./auth";
+import supabaseAuthRoutes from "./routes/supabase-auth";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -10,26 +11,82 @@ export async function registerRoutes(
 ): Promise<Server> {
   setupAuth(app);
 
-  // Legacy local auth routes disabled - moving to Supabase Auth
-  /*
-  app.post("/api/auth/login", (req, res, next) => {
-    passport.authenticate("local", (err: any, user: any, info: any) => {
-      if (err) return next(err);
-      if (!user) {
-        return res.status(401).json({ error: info?.message || "Credenciais inválidas" });
-      }
-      req.logIn(user, (err) => {
-        if (err) return next(err);
-        res.json({ user: { id: user.id, username: user.username, name: user.name, role: user.role } });
-      });
-    })(req, res, next);
-  });
-  */
-
   app.post("/api/auth/logout", (req, res) => {
     req.logout(() => {
       res.json({ success: true });
     });
+  });
+
+  app.post("/api/auth/login", passport.authenticate("local"), (req, res) => {
+    res.json({
+      user: {
+        id: req.user!.id,
+        username: req.user!.username,
+        fullName: req.user!.fullName,
+        role: req.user!.role,
+        status: req.user!.status,
+        team: req.user!.team
+      }
+    });
+  });
+
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const { username, email, password, fullName } = req.body;
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(400).json({ error: "Nome de usuário já existe" });
+      }
+      
+      // Hash password and create user
+      const { scrypt, randomBytes } = await import("crypto");
+      const { promisify } = await import("util");
+      const scryptAsync = promisify(scrypt);
+      
+      const salt = randomBytes(16).toString("hex");
+      const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+      const hashedPassword = `${buf.toString("hex")}.${salt}`;
+      
+      const newUser = await storage.createUser({
+        username,
+        email,
+        password: hashedPassword,
+        name: fullName,
+        fullName,
+        role: "viewer",
+        status: "active"
+      });
+      
+      // Auto-login after registration
+      req.login({
+        id: newUser.id,
+        username: newUser.username,
+        fullName: newUser.fullName,
+        role: newUser.role,
+        status: newUser.status,
+        team: newUser.team
+      }, (err) => {
+        if (err) {
+          console.error("Auto-login error:", err);
+        }
+      });
+      
+      res.json({
+        user: {
+          id: newUser.id,
+          username: newUser.username,
+          fullName: newUser.fullName,
+          role: newUser.role,
+          status: newUser.status,
+          team: newUser.team
+        }
+      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(500).json({ error: "Erro ao criar usuário" });
+    }
   });
 
   app.get("/api/auth/me", (req, res) => {
@@ -39,6 +96,7 @@ export async function registerRoutes(
     res.json({
       user: {
         id: req.user!.id,
+        username: req.user!.username,
         fullName: req.user!.fullName,
         role: req.user!.role,
         status: req.user!.status,
@@ -46,13 +104,6 @@ export async function registerRoutes(
       }
     });
   });
-
-  /*
-  app.post("/api/auth/register", async (req, res) => {
-    // Disabled registration via this endpoint for now
-    res.status(501).json({ error: "Registration disabled in favor of Supabase Auth" });
-  });
-  */
 
   app.get("/api/users", requireAdmin, async (req, res) => {
     const users = await storage.getUsers();

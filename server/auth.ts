@@ -12,13 +12,28 @@ const { Pool } = pkg;
 
 const scryptAsync = promisify(scrypt);
 
+async function hashPassword(password: string): Promise<string> {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
+
+async function comparePasswords(supplied: string, stored: string): Promise<boolean> {
+  const [hashed, salt] = stored.split(".");
+  const hashedBuf = Buffer.from(hashed, "hex");
+  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+  return timingSafeEqual(hashedBuf, suppliedBuf);
+}
+
 declare global {
   namespace Express {
     interface User {
       id: string;
+      username: string;
       fullName: string | null;
       role: UserRole | string | null;
       status: string | null;
+      team: string | null;
     }
   }
 }
@@ -53,15 +68,32 @@ export function setupAuth(app: Express): void {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Local Strategy disabled as we are moving to Supabase Auth / No password schema
-  /*
+  // Local Strategy for username/password authentication
   passport.use(
     new LocalStrategy(async (username, password, done) => {
-      // ... implementation removed
-      return done(null, false);
+      try {
+        const user = await storage.getUserByUsername(username);
+        if (!user || !user.password) {
+          return done(null, false);
+        }
+        
+        const isValid = await comparePasswords(password, user.password);
+        if (!isValid) {
+          return done(null, false);
+        }
+        
+        return done(null, {
+          id: user.id,
+          fullName: user.fullName,
+          role: user.role,
+          status: user.status,
+          team: user.team,
+        });
+      } catch (error) {
+        return done(error);
+      }
     })
   );
-  */
 
   passport.serializeUser((user, done) => {
     done(null, user.id);
@@ -78,6 +110,7 @@ export function setupAuth(app: Express): void {
         fullName: user.fullName,
         role: user.role,
         status: user.status,
+        team: user.team,
       });
     } catch (err) {
       done(err);
