@@ -118,7 +118,18 @@ export class DatabaseStorage implements IStorage {
     // Create default admin user
     const existingUsers = await db.select().from(users);
     if (existingUsers.length === 0) {
+      const { scrypt, randomBytes } = await import("crypto");
+      const { promisify } = await import("util");
+      const scryptAsync = promisify(scrypt);
+      
+      const salt = randomBytes(16).toString("hex");
+      const buf = (await scryptAsync("admin123", salt, 64)) as Buffer;
+      const hashedPassword = `${buf.toString("hex")}.${salt}`;
+      
       await db.insert(users).values({
+        username: "admin",
+        email: "admin@fincontrol.com",
+        password: hashedPassword,
         fullName: "Administrador",
         role: "admin",
         status: "active",

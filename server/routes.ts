@@ -32,17 +32,30 @@ export async function registerRoutes(
     });
   });
 
-  app.post("/api/auth/login", passport.authenticate("local"), (req, res) => {
-    res.json({
-      user: {
-        id: req.user!.id,
-        username: req.user!.username,
-        fullName: req.user!.fullName,
-        role: req.user!.role,
-        status: req.user!.status,
-        team: req.user!.team
+  app.post("/api/auth/login", (req, res, next) => {
+    passport.authenticate("local", (err: any, user: any, info: any) => {
+      if (err) {
+        return res.status(500).json({ error: "Erro interno do servidor" });
       }
-    });
+      if (!user) {
+        return res.status(401).json({ error: "Usuário ou senha inválidos" });
+      }
+      req.logIn(user, (err) => {
+        if (err) {
+          return res.status(500).json({ error: "Erro ao fazer login" });
+        }
+        return res.json({
+          user: {
+            id: user.id,
+            username: user.username,
+            fullName: user.fullName,
+            role: user.role,
+            status: user.status,
+            team: user.team
+          }
+        });
+      });
+    })(req, res, next);
   });
 
   app.post("/api/auth/register", async (req, res) => {
