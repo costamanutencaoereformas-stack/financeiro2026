@@ -96,7 +96,7 @@ export async function registerRoutes(
 
   app.get("/api/auth/me", (req, res) => {
     if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: "Não autenticado" });
+      return res.status(200).json({ user: null, authenticated: false });
     }
     res.json({
       user: {
