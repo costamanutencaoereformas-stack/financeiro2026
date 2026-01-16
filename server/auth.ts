@@ -16,29 +16,15 @@ declare global {
   namespace Express {
     interface User {
       id: string;
-      username: string;
-      name: string;
-      role: UserRole;
-      active: boolean;
+      fullName: string | null;
+      role: UserRole | string | null;
+      status: string | null;
     }
   }
 }
 
-export async function hashPassword(password: string): Promise<string> {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
-}
+// function hashPassword and comparePasswords removed as they relied on local password storage
 
-export async function comparePasswords(
-  supplied: string,
-  stored: string
-): Promise<boolean> {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
-}
 
 export function setupAuth(app: Express): void {
   const PgSession = connectPgSimple(session);
@@ -67,32 +53,15 @@ export function setupAuth(app: Express): void {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // Local Strategy disabled as we are moving to Supabase Auth / No password schema
+  /*
   passport.use(
     new LocalStrategy(async (username, password, done) => {
-      try {
-        const user = await storage.getUserByUsername(username);
-        if (!user) {
-          return done(null, false, { message: "Usuário não encontrado" });
-        }
-        if (!user.active) {
-          return done(null, false, { message: "Usuário desativado" });
-        }
-        const isValid = await comparePasswords(password, user.password);
-        if (!isValid) {
-          return done(null, false, { message: "Senha incorreta" });
-        }
-        return done(null, {
-          id: user.id,
-          username: user.username,
-          name: user.name,
-          role: user.role as UserRole,
-          active: user.active,
-        });
-      } catch (err) {
-        return done(err);
-      }
+      // ... implementation removed
+      return done(null, false);
     })
   );
+  */
 
   passport.serializeUser((user, done) => {
     done(null, user.id);
@@ -106,10 +75,9 @@ export function setupAuth(app: Express): void {
       }
       done(null, {
         id: user.id,
-        username: user.username,
-        name: user.name,
-        role: user.role as UserRole,
-        active: user.active,
+        fullName: user.fullName,
+        role: user.role,
+        status: user.status,
       });
     } catch (err) {
       done(err);
@@ -129,7 +97,7 @@ export const requireRole = (...roles: UserRole[]): RequestHandler => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ error: "Não autenticado" });
     }
-    if (!roles.includes(req.user!.role)) {
+    if (!roles.includes(req.user!.role as UserRole)) {
       return res.status(403).json({ error: "Sem permissão para esta ação" });
     }
     next();

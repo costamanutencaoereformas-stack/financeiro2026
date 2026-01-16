@@ -20,12 +20,11 @@ import type {
   Note, InsertNote,
   FinancialGoal, InsertFinancialGoal, FinancialGoalProgress,
 } from "@shared/schema";
-import { hashPassword } from "./auth";
+
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser & { password: string }): Promise<User>;
+  createUser(user: InsertUser): Promise<User>;
   getUsers(): Promise<User[]>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
   deleteUser(id: string): Promise<boolean>;
@@ -118,13 +117,10 @@ export class DatabaseStorage implements IStorage {
     // Create default admin user
     const existingUsers = await db.select().from(users);
     if (existingUsers.length === 0) {
-      const hashedPassword = await hashPassword("admin123");
       await db.insert(users).values({
-        username: "admin",
-        password: hashedPassword,
-        name: "Administrador",
+        fullName: "Administrador",
         role: "admin",
-        active: true,
+        status: "active",
       });
     }
 
@@ -226,12 +222,9 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
-  }
 
-  async createUser(user: InsertUser & { password: string }): Promise<User> {
+
+  async createUser(user: InsertUser): Promise<User> {
     const [newUser] = await db.insert(users).values(user).returning();
     return newUser;
   }
