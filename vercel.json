@@ -1,13 +1,8 @@
 {
   "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "builds": [
-    {
-      "src": "script/build.ts",
-      "use": "@vercel/static-build",
-      "config": {
-        "outputDirectory": "dist"
-      }
-    },
     {
       "src": "dist/index.cjs",
       "use": "@vercel/node",
